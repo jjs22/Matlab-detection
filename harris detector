@@ -1,0 +1,45 @@
+clear all; clc;
+
+% declare variables
+eps = 2.0e-52;
+sigma = 1;
+radius = 3;
+Threshold = 1000;
+size = 2*radius + 1      % the size of matrix filter
+
+Hx = [-1 -2 -1;0 0 0;1 2 1]; % x derivative matrix
+Hy=Hx';                                               % y derivative matrix
+
+g = fspecial('gaussian', max(1, fix(6*sigma)), sigma); %%%%%% Gaussien Filter
+
+%read image
+
+Img1=imread('image.jpg');
+
+%get all rows
+
+im1 = Img1(:,:,1);
+
+% Step 1: computer derivatives of image
+Ix = conv2(im1, Hx, 'same');
+Iy = conv2(im1, Hy, 'same');
+% Step 2: Smooth spare image derivatives
+
+Ix2 = conv2(Ix.^2, g, 'same');
+Iy2 = conv2(Iy.^2, g, 'same');
+Ixy = conv2(Ix.*Iy,g,'same');
+
+%Step 3: Harris corner mensure
+ 
+Harris = (Ix2.*Iy2 - Ixy.^2)./(Ix2+Iy2 + eps);
+
+%Step 4: Find local maximum
+
+max = ordfilt2(Harris, size.^2, ones(size));
+
+Harris = (Harris == max)&(Harris > Threshold);
+
+% Plot
+[rows, cols] = find(Harris);
+figure, image(Img1), axis image, colormap(gray), hold on,
+plot(cols, rows,'ro'), title('Corners Detected literatura');
